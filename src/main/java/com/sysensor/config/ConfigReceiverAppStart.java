@@ -2,51 +2,46 @@ package com.sysensor.config;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
-import com.sysensor.config.config.Book;
+import com.sysensor.config.config.TableNameConfig;
+import com.sysensor.config.table.ApplicationConfig;
+import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.ApplicationArguments;
+import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
 
 @SpringBootApplication
-public class ConfigReceiverAppStart implements CommandLineRunner{
-
+public class ConfigReceiverAppStart implements ApplicationRunner {
+	Logger LOG = Logger.getLogger(this.getClass());
 
 	@Autowired
 	AmazonDynamoDB amazonDynamoDB;
+	@Autowired
+	TableNameConfig tableNameConfig;
 
 	public static void main(String[] args) {
 		ApplicationContext context = SpringApplication.run(ConfigReceiverAppStart.class, args);
-		System.exit(SpringApplication.exit(context));
+		//System.exit(SpringApplication.exit(context));
+		System.out.print(context.toString());
 	}
+
+	private void createApplicationConfig() {
+		DynamoDBMapper mapper = new DynamoDBMapper(amazonDynamoDB);
+		ApplicationConfig applicationConfig = new ApplicationConfig("Srilanka_Transportation","West");
+		mapper.save(applicationConfig);
+	}
+
+	private ApplicationConfig getBook() {
+		DynamoDBMapper mapper = new DynamoDBMapper(amazonDynamoDB);
+		return mapper.load(ApplicationConfig.class, "1");
+	}
+
 
 	@Override
-	public void run(String... args) throws Exception {
-//		System.out.println("---------------- START UPLOAD FILE ----------------");
-//		s3Services.uploadFile(key, uploadFilePath);
-//		System.out.println("---------------- START DOWNLOAD FILE ----------------");
-//		s3Services.downloadFile(key, downloadFilePath);
-//		System.out.println("DONE!");
-		System.out.println("Found document: ");
-		//CRUD.testCRUDOperations(amazonDynamoDB);
-		createBook();
-		Book book = getBook();
-		System.out.println("Found document: " + book);
-
-
+	public void run(ApplicationArguments applicationArguments) throws Exception {
+		tableNameConfig.createApplicationConfigTable();
+		createApplicationConfig();
 	}
-
-	private void createBook() {
-		DynamoDBMapper mapper = new DynamoDBMapper(amazonDynamoDB);
-		Book book = new Book("2", "Minecraft Modding with Forge", "1234", "29.99");
-		mapper.save(book);
-	}
-
-	private Book getBook() {
-		DynamoDBMapper mapper = new DynamoDBMapper(amazonDynamoDB);
-		return mapper.load(Book.class, "1");
-	}
-
-
 }
